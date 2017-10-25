@@ -23,6 +23,10 @@ s3=2
 s1x=32
 s1y=52
 s1yinit=52
+candylist={}
+candyclk=0
+candytomake=99
+p={}
 
 function _init()
  w1={}
@@ -54,6 +58,8 @@ function _update60()
  movewheels()
  movebat()
  movespider()
+ makecandy()
+ movecandy()
 end
 
 function input()
@@ -77,7 +83,7 @@ function movewheels()
  for w in all(wheels) do
   i=0
   for s in all(w.slots) do --i did this in a very late night and im sure it sucks
-   if(w.isspinning  or (not w.isspinning and w.slottostop[2]<s1yinit))then 
+   if(w.isspinning  or (not w.isspinning and w.slottostop[2]<s1yinit-16))then 
     s[2]+=1
     if(s[2]>88)s[2]=24
    else
@@ -128,9 +134,43 @@ function movespider()
  --end_weby+=1
 end
 
+function makecandy()
+  if(candytomake>0)then
+    candyclk+=1
+    if (candyclk>15)then
+      candyclk=0
+      candytomake-=1
+      p={}
+      p.a=0
+      p.s=104
+      p.x=56
+      p.y=100
+      p.up=1.6
+      p.g=0.05
+      p.movex=flr(rnd(2 * 100)) / 100-1
+      add(candylist,p)
+    end 
+  else
+    candyclk=0
+  end
+end
+
+function movecandy()
+ for p in all(candylist)do
+   p.a+=0.01
+   p.a=p.a%360 
+   p.y-=p.up
+   p.up-=p.g
+   if(p.up<0)p.g=0.05
+
+   p.x+=p.movex
+   if(p.y>128)del(candylist,p)
+  end
+end
+
 function _draw()
  cls(7)
- pset(32,52,8)
+ pset(32,s1yinit,8)
  for w in all(wheels) do
   for s in all(w.slots) do --i did this in a very late night and im sure it sucks
    spr(s[1],w.x,s[2],2,2)
@@ -140,6 +180,7 @@ function _draw()
  drawbat()
  drawnet()
  drawspider()
+ drawcandy()
 end
 
 function drawbat()
@@ -154,6 +195,67 @@ end
 function drawspider()
  spr(spider_spr,end_webx-8,end_weby-4,2,2)
  line(start_webx,start_weby,end_webx,end_weby,0)
+end
+
+function drawcandy()
+  for p in all(candylist)do
+    rspr(8*8,6*8,p.x,p.y,p.a,2)
+  end
+end
+
+--utils
+--rotated sprited from jihem
+
+-- function spr_r(s,x,y,a,w,h)
+
+--  print(s.." ",20,20,0)
+--  sw=(w or 1)*8
+--  sh=(h or 1)*8
+--  sx=(s%8)*8
+--  sy=flr(s/8)*8
+--  x0=flr(0.5*sw)
+--  y0=flr(0.5*sh)
+--  a=a/360
+--  sa=sin(a)
+--  ca=cos(a)
+--  for ix=0,sw-1 do
+--   for iy=0,sh-1 do
+--    dx=ix-x0
+--    dy=iy-y0
+--    xx=flr(dx*ca-dy*sa+x0)
+--    yy=flr(dx*sa+dy*ca+y0)
+--    if (xx>=0 and xx<sw and yy>=0 and yy<=sh) then
+--     pset(x+ix,y+iy,sget(sx+xx,sy+yy))
+--    end
+--   end
+--  end
+-- end
+
+function rspr(sx,sy,x,y,a,w)
+ local ca,sa=cos(a),sin(a)
+ local srcx,srcy,addr,pixel_pair
+ local ddx0,ddy0=ca,sa
+ local mask=shl(0xfff8,(w-1))
+ w*=4
+ ca*=w
+ sa*=w
+ local dx0,dy0=sa-ca+w,-ca-sa+w
+ w=2*w-1
+ for ix=0,w do
+  srcx,srcy=dx0,dy0
+  for iy=0,w do
+   if band(bor(srcx,srcy),mask)==0 then
+    local c=sget(sx+srcx,sy+srcy)
+    if c!=11 then
+        pset(x+ix,y+iy,c)
+        end
+    end
+   srcx-=ddy0
+    srcy+=ddx0
+  end
+  dx0+=ddx0
+  dy0+=ddy0
+ end
 end
 
 __gfx__
@@ -205,22 +307,22 @@ __gfx__
 70990000009900990000009900999009009990099009907709999999097997979797979797977970999999907700009999999077b09999999999990b00777777
 70099999009900990099999900999009070990099999907700999990000000000000000000000000099999007770000000000777bb099999999990bb00777777
 77000000000000000000000077000700077000700000077770000000777777777777777777777777000000077777000000007777bbb0000000000bbb00777777
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb77bbb77b000000000000000000000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb77007b7007000000000000000000000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bbb99999bbbbbbbbbbbb00000000bbbbbbb0000000bbbbbbbbbbb70000007007000000000000000000000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bb009009bbbbbbbbbb007777777700bbbb0bb0000000bbbbbbbb700000007000000000000000000000000000bb77bbbbbbbb77bbbbb7bbbbbbbb7bbb00000000
-bbb99999bbbbbbbbb07997777997770bb99bb9999999bbbbbbb7000000000990000000000000000000000000b7007b7777b7007bbb707b7777b707bb00000000
-bbb00999bbbbbbbbb09999779999770bb99b000000000bbbbb700000000009900000000000000000000000007077070000707707b70707000070707b00000000
-bbb00990bbbbbbbbb00099770099770bbbbbbb0990909bbbb700000000000000000000000000000000000000b77770000007777bbb777000000777bb00000000
-bbbbbb000bbbbbbb0700997700997770bbbbbb0999999bbb7000000000000000000000000000000000000000b70000000000007bbb700000000007bb00000000
-b90090000bbbbbbb0779977779977770bbbbb00990990bbb70007700000000000000000000000000000000007077709009077707b70770900907707b00000000
-b9bb9b000bbbbbbb0777777777777770bbbbb00099009bbbb777b70000000000000000000000000000000000b7b7000000007b7bbb770000000077bb00000000
-bbbbbb0b0bbbbbbb0777777777777770bbbbb000000bbbbbbbbbb70007700000000000000000000000000000bb707700007707bbbb707700007707bb00000000
-bbbbb0bbb00bbbbb077777777777777099bb000000000bbbbbbbb7007b700000000000000000000000000000b70770777707707bbb707707707707bb00000000
-bbbbbb0bbbb0bbbb0777777777777770999b00000099909bbbbbb707bbb77000000000000000000000000000bb7707bbbb7077bbbbb7707bb7077bbb00000000
-bbbbb99bbb99bbbb077770777707777099990009099bbbbbbbbbbb7bbbbbb770000000000000000000000000bbb707bbbb707bbbbbbb707bb707bbbb00000000
-bbbbbbbbbbbbbbbbb0770b0770b0770b999b00bb0b0bbbbbbbbbbbbbbbbbbb70000000000000000000000000bbbb7bbbbbb7bbbbbbbbb7bbbb7bbbbb00000000
-bbbbbbbbbbbbbbbbbb00bbb00bbb00bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb7000000000000000000000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb77bbb77bbbbbbbbbbb0bbbbb00000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb77007b7007bbbbbbbbb090bbbb00000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
+bbb99999bbbbbbbbbbbb00000000bbbbbbb0000000bbbbbbbbbbb70000007007bbbbbbbbb0990bbb00000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
+bb009009bbbbbbbbbb007777777700bbbb0bb0000000bbbbbbbb700000007000bbbbbbbbb09990bb00000000bb77bbbbbbbb77bbbbb7bbbbbbbb7bbb00000000
+bbb99999bbbbbbbbb07997777997770bb99bb9999999bbbbbbb7000000000990bbbbbb000099990b00000000b7007b7777b7007bbb707b7777b707bb00000000
+bbb00999bbbbbbbbb09999779999770bb99b000000000bbbbb70000000000990bbbbb09999099990000000007077070000707707b70707000070707b00000000
+bbb00990bbbbbbbbb00099770099770bbbbbbb0990909bbbb700000000000000bbbb09999990000b00000000b77770000007777bbb777000000777bb00000000
+bbbbbb000bbbbbbb0700997700997770bbbbbb0999999bbb7000000000000000bbbb09999790bbbb00000000b70000000000007bbb700000000007bb00000000
+b90090000bbbbbbb0779977779977770bbbbb00990990bbb7000770000000000bbbb09999790bbbb000000007077709009077707b70770900907707b00000000
+b9bb9b000bbbbbbb0777777777777770bbbbb00099009bbbb777b70000000000b00009999990bbbb00000000b7b7000000007b7bbb770000000077bb00000000
+bbbbbb0b0bbbbbbb0777777777777770bbbbb000000bbbbbbbbbb7000770000009999099990bbbbb00000000bb707700007707bbbb707700007707bb00000000
+bbbbb0bbb00bbbbb077777777777777099bb000000000bbbbbbbb7007b700000b099990000bbbbbb00000000b70770777707707bbb707707707707bb00000000
+bbbbbb0bbbb0bbbb0777777777777770999b00000099909bbbbbb707bbb77000bb09990bbbbbbbbb00000000bb7707bbbb7077bbbbb7707bb7077bbb00000000
+bbbbb99bbb99bbbb077770777707777099990009099bbbbbbbbbbb7bbbbbb770bbb0990bbbbbbbbb00000000bbb707bbbb707bbbbbbb707bb707bbbb00000000
+bbbbbbbbbbbbbbbbb0770b0770b0770b999b00bb0b0bbbbbbbbbbbbbbbbbbb70bbbb090bbbbbbbbb00000000bbbb7bbbbbb7bbbbbbbbb7bbbb7bbbbb00000000
+bbbbbbbbbbbbbbbbbb00bbb00bbb00bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb7bbbbb0bbbbbbbbbb00000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
