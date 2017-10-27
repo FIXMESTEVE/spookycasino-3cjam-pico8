@@ -58,6 +58,7 @@ function _update60()
  movewheels()
  movebat()
  movespider()
+ checkwin()
  makecandy()
  movecandy()
 end
@@ -76,6 +77,18 @@ function input()
  if(btn(1) and  w3.isspinning)then
   w3.isspinning=false
   w3.slottostop=closestslot(w3)
+ end
+end
+
+function checkwin()
+ if(not w1.isspinning and not w2.isspinning and not w3.isspinning)then
+  first=mget(wheels[1].x,s1yinit+8)
+  second=mget(wheels[2].x,s1yinit+8)
+  third=mget(wheels[3].x,s1yinit+8)
+
+  if(third==second and third==first)then
+
+  end
  end
 end
 
