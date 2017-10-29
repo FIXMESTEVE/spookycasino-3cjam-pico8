@@ -1,5 +1,5 @@
 pico-8 cartridge // http://www.pico-8.com
-version 8
+version 11
 __lua__
 middle=59
 wheels={}
@@ -82,12 +82,12 @@ end
 
 function checkwin()
  if(not w1.isspinning and not w2.isspinning and not w3.isspinning)then
-  first=mget(wheels[1].x,s1yinit+8)
-  second=mget(wheels[2].x,s1yinit+8)
-  third=mget(wheels[3].x,s1yinit+8)
+  first=w1.slottostop[1]
+  second=w2.slottostop[1]
+  third=w3.slottostop[1]
 
   if(third==second and third==first)then
-
+    printh("win")
   end
  end
 end
@@ -99,8 +99,6 @@ function movewheels()
    if(w.isspinning  or (not w.isspinning and w.slottostop[2]<s1yinit-16))then 
     s[2]+=1
     if(s[2]>88)s[2]=24
-   else
-    printh(closestslot(w)[2])
    end
   end
  end
