@@ -25,10 +25,13 @@ s1y=52
 s1yinit=52
 candylist={}
 candyclk=0
-candytomake=99
+candytomake=0
 p={}
+stateclk=0
+blinkspr=255
 
 function _init()
+ state=0 --0 scroll 1 lose 2 win
  w1={}
  w1.x=32
  w1.y=s1y
@@ -54,13 +57,48 @@ function _init()
 end
 
 function _update60()
- input()
- movewheels()
+  if(state==0)then
+   input()
+  checkwin()
+  elseif(state==2 or state==1)then
+
+   if(stateclk%10==0 and state==2)blink()
+   stateclk+=1
+   if(stateclk>150)then
+    if(state==2)unblink()
+    w1.isspinning=true
+    if(stateclk>180)then
+      w2.isspinning=true
+    end
+    if(stateclk>210)then
+      w3.isspinning=true   
+      stateclk=0
+      state=0
+    end 
+   end
+  end
+ movewheels() 
  movebat()
  movespider()
- checkwin()
  makecandy()
  movecandy()
+end
+
+function blink()
+  if( w1.slottostop[1]!=128)then
+     w1.slottostop[1]=128
+     w2.slottostop[1]=128
+     w3.slottostop[1]=128
+  else
+    unblink()
+  end
+end
+
+function unblink()
+  
+    w1.slottostop[1]=blinkspr
+     w2.slottostop[1]=blinkspr
+     w3.slottostop[1]=blinkspr
 end
 
 function input()
@@ -86,8 +124,12 @@ function checkwin()
   second=w2.slottostop[1]
   third=w3.slottostop[1]
 
-  if(third==second and third==first)then
-    printh("win")
+  if(state==0 and third==second and third==first)then
+    state=2
+    candytomake=20
+    blinkspr= w1.slottostop[1]
+  else
+    state=1
   end
  end
 end
@@ -96,8 +138,8 @@ function movewheels()
  for w in all(wheels) do
   i=0
   for s in all(w.slots) do --i did this in a very late night and im sure it sucks
-   if(w.isspinning  or (not w.isspinning and w.slottostop[2]<s1yinit-16))then 
-    s[2]+=1
+   if(w.isspinning  or (not w.isspinning and w.slottostop[2]<s1yinit))then 
+    s[2]+=0.75
     if(s[2]>88)s[2]=24
    end
   end
@@ -105,15 +147,34 @@ function movewheels()
 end
 
 function closestslot(wheel)
- sy=100
+ sy=999
  local closest
  for s in all(wheel.slots)do
-  if(s[2]-s1yinit<sy)then
-   sy=s[2]-s1yinit
+  if(s[2]+s1yinit+32<sy)then
+   sy=s[2]+s1yinit+32
    closest=s
   end
  end
  return closest
+
+ -- sy=999
+ -- local closest
+ -- for s in all(wheel.slots)do
+ --  if(s[2]>=s1yinit and s[2]<=s1yinit+16)then
+ --   return s
+ --  end
+ -- end
+ -- return closest
+
+ -- local closest={0,999}
+ -- for s in all(wheel.slots)do
+ --  if(s[2]>s1yinit-16)then
+ --    if(s[2]<closest[2])closest =  s
+ --  end
+ -- end
+
+
+ -- return closest
 end
 
 function movebat()
@@ -214,34 +275,6 @@ function drawcandy()
   end
 end
 
---utils
---rotated sprited from jihem
-
--- function spr_r(s,x,y,a,w,h)
-
---  print(s.." ",20,20,0)
---  sw=(w or 1)*8
---  sh=(h or 1)*8
---  sx=(s%8)*8
---  sy=flr(s/8)*8
---  x0=flr(0.5*sw)
---  y0=flr(0.5*sh)
---  a=a/360
---  sa=sin(a)
---  ca=cos(a)
---  for ix=0,sw-1 do
---   for iy=0,sh-1 do
---    dx=ix-x0
---    dy=iy-y0
---    xx=flr(dx*ca-dy*sa+x0)
---    yy=flr(dx*sa+dy*ca+y0)
---    if (xx>=0 and xx<sw and yy>=0 and yy<=sh) then
---     pset(x+ix,y+iy,sget(sx+xx,sy+yy))
---    end
---   end
---  end
--- end
-
 function rspr(sx,sy,x,y,a,w)
  local ca,sa=cos(a),sin(a)
  local srcx,srcy,addr,pixel_pair
@@ -334,22 +367,22 @@ bbbbbb0bbbb0bbbb0777777777777770999b00000099909bbbbbb707bbb77000bb09990bbbbbbbbb
 bbbbb99bbb99bbbb077770777707777099990009099bbbbbbbbbbb7bbbbbb770bbb0990bbbbbbbbb00000000bbb707bbbb707bbbbbbb707bb707bbbb00000000
 bbbbbbbbbbbbbbbbb0770b0770b0770b999b00bb0b0bbbbbbbbbbbbbbbbbbb70bbbb090bbbbbbbbb00000000bbbb7bbbbbb7bbbbbbbbb7bbbb7bbbbb00000000
 bbbbbbbbbbbbbbbbbb00bbb00bbb00bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb7bbbbb0bbbbbbbbbb00000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb00000000
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+7777777777777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+7777777777777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+7777777777777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+7777777777777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+7777777777777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+7777777777777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+7777777777777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+7777777777777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+7777777777777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+7777777777777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+7777777777777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+7777777777777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+7777777777777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+7777777777777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+7777777777777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+7777777777777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
